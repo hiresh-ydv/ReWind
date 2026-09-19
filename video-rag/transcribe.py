@@ -39,7 +39,7 @@ if __name__ == "__main__":
             }
 
     # Sabka result ek hi file me save karo
-    with open("data/transcripts.json", "w") as f:
-        json.dump(all_transcripts, f, indent=2)
+    with open("data/transcripts.json", "w", encoding="utf-8") as f:
+        json.dump(all_transcripts, f, indent=2, ensure_ascii=False)
 
     print(f"\nDone. Got transcripts for {len(all_transcripts)}/{len(videos)} videos.")
