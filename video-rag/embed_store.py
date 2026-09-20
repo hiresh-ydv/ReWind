@@ -14,13 +14,13 @@ def build_vector_store():
 
     # Multilingual model — Hindi + English dono handle karega
     print("Loading embedding model...")
-    model = SentenceTransformer("paraphrase-multilingual-MiniLM-L12-v2")
+    model = SentenceTransformer("intfloat/multilingual-e5-base")
 
     # ChromaDB client — disk pe persist hoga (data/chroma_db folder me)
     client = chromadb.PersistentClient(path="data/chroma_db")
     collection = client.get_or_create_collection(name="course_chunks")
 
-    texts = [c["text"] for c in chunks]
+    texts = [f"passage: {c['text']}" for c in chunks]
     ids = [f"chunk_{i}" for i in range(len(chunks))]
     metadatas = [
         {

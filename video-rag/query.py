@@ -6,9 +6,8 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# Ek hi baar load karo — baar baar model load karna slow hota
 print("Loading embedding model...")
-model = SentenceTransformer("paraphrase-multilingual-MiniLM-L12-v2")
+model = SentenceTransformer("intfloat/multilingual-e5-base")
 
 client = chromadb.PersistentClient(path="data/chroma_db")
 collection = client.get_or_create_collection(name="course_chunks")
@@ -16,12 +15,34 @@ collection = client.get_or_create_collection(name="course_chunks")
 groq_client = Groq(api_key=os.environ["GROQ_API_KEY"])
 
 
+def translate_to_devanagari(query: str):
+    """
+    User ki Hinglish/English query ko Devanagari script me convert karta hai,
+    taaki course transcripts (jo Devanagari me hain) ke saath better match ho.
+    """
+    prompt = f"""Convert the following text into Hindi written in Devanagari script. 
+Keep English technical/tech words as they are commonly spoken in Hindi speech (transliterate them into Devanagari too, don't translate technical terms into pure Hindi).
+Only output the converted text, nothing else, no explanation.
+
+Text: {query}"""
+
+    response = groq_client.chat.completions.create(
+        model="openai/gpt-oss-120b",
+        messages=[{"role": "user", "content": prompt}],
+    )
+    return response.choices[0].message.content.strip()
+
+
 def search(query: str, top_k=5):
     """
-    User ki query embed karke ChromaDB me similarity search karta hai.
-    Top-k matching chunks (text + metadata) return karta hai.
+    User ki query ko Devanagari me translate karke, e5 prefix add karke,
+    embed karke ChromaDB me similarity search karta hai.
     """
-    query_embedding = model.encode([query]).tolist()
+    devanagari_query = translate_to_devanagari(query)
+    
+
+    # e5 models ko query ke aage "query: " prefix chahiye hota hai
+    query_embedding = model.encode([f"query: {devanagari_query}"]).tolist()
 
     results = collection.query(
         query_embeddings=query_embedding,
@@ -40,16 +61,17 @@ def search(query: str, top_k=5):
 
 
 def ask_llm(query: str, matches: list):
-    """
-    Retrieved chunks ko context banakar Groq LLM se answer generate karwata hai.
-    """
     context = "\n\n".join(
         f"[Video: {m['video_title']}, Timestamp: {int(m['start_time'])}s]\n{m['text']}"
         for m in matches
     )
 
-    prompt = f"""Tumhe course transcripts ke chunks diye gaye hain neeche. Inhi ke base pe user ke sawal ka jawab do.
-Jawab clear aur concise rakhna, aur bata dena kaunse video/timestamp se yeh info aayi hai.
+    prompt = f"""Tumhe course transcripts ke chunks diye gaye hain neeche. SIRF inhi chunks ke base pe user ke sawal ka jawab do.
+
+Zaroori rules:
+- Sirf diye gaye context se answer karo, apni bahar ki knowledge use mat karo.
+- Agar context me answer nahi hai, saaf keh do: "Yeh topic diye gaye course videos me cover nahi mila."
+- Jawab clear aur concise rakho, aur bata do kaunse video/timestamp se aaya.
 
 Context:
 {context}
