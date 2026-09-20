@@ -5,6 +5,15 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "chromadb>=1.5.9",
+    "groq>=1.7.0",
+    "python-dotenv>=1.2.3",
+    "sentence-transformers>=6.1.0",
     "youtube-transcript-api>=1.2.4",
     "yt-dlp>=2026.8.19",
+]
+
+[tool.uv.workspace]
+members = [
+    "embed_store.py",
 ]

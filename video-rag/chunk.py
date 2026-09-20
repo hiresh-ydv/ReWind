@@ -41,7 +41,7 @@ def merge_into_chunks(segments, window=40):
 
 
 if __name__ == "__main__":
-    with open("data/transcripts.json") as f:
+    with open("data/transcripts.json", encoding="utf-8") as f:
         all_transcripts = json.load(f)
 
     all_chunks = []
