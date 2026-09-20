@@ -66,9 +66,11 @@ def ask_llm(query: str, matches: list):
         for m in matches
     )
 
-    prompt = f"""Tumhe course transcripts ke chunks diye gaye hain neeche. SIRF inhi chunks ke base pe user ke sawal ka jawab do.
+    prompt = f"""Tumhe course transcripts ke chunks diye gaye hain neeche (yeh Devanagari script me ho sakte hain). 
+SIRF inhi chunks ke base pe user ke sawal ka jawab do.
 
 Zaroori rules:
+- Apna jawab HINGLISH me do — matlab Roman/English alphabet me likho (jaise "temperature kya hota hai"), Devanagari script (हिंदी) BILKUL use mat karo, chahe context Devanagari me ho.
 - Sirf diye gaye context se answer karo, apni bahar ki knowledge use mat karo.
 - Agar context me answer nahi hai, saaf keh do: "Yeh topic diye gaye course videos me cover nahi mila."
 - Jawab clear aur concise rakho, aur bata do kaunse video/timestamp se aaya.
@@ -78,7 +80,7 @@ Context:
 
 Sawal: {query}
 
-Jawab:"""
+Jawab (Roman script/Hinglish me, no Devanagari):"""
 
     response = groq_client.chat.completions.create(
         model="openai/gpt-oss-120b",
